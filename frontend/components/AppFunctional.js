@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 // önerilen başlangıç stateleri
 const initialMessage = ''
@@ -9,6 +9,10 @@ const initialIndex = 4 //  "B" nin bulunduğu indexi
 export default function AppFunctional(props) {
   // AŞAĞIDAKİ HELPERLAR SADECE ÖNERİDİR.
   // Bunları silip kendi mantığınızla sıfırdan geliştirebilirsiniz.
+  const [index,setIndex] = useState(initialIndex);
+  const [message, SetMessage] = useState(initialMessage);
+  const [email, setEmail] = useState(initialEmail);
+  const [steps, setSteps] = useState(initialSteps);
 
   function getXY() {
     // Koordinatları izlemek için bir state e sahip olmak gerekli değildir.
