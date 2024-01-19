@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import axios from 'axios';
 
 // önerilen başlangıç stateleri
-const initialMessage = ''
-const initialEmail = ''
-const initialSteps = 0
-const initialIndex = 4 //  "B" nin bulunduğu indexi
+const initialMessage = '';
+const initialEmail = '';
+const initialSteps = 0;
+const initialIndex = 4; //  "B" nin bulunduğu indexi
 
 export default function AppFunctional(props) {
   // AŞAĞIDAKİ HELPERLAR SADECE ÖNERİDİR.
@@ -16,21 +17,11 @@ export default function AppFunctional(props) {
   const [x, setX] = useState((initialIndex % 3) + 1);
   const [y, setY] = useState(Math.floor(initialIndex / 3) + 1);
   
- 
-  
-
-  function getXY() {
-    // Koordinatları izlemek için bir state e sahip olmak gerekli değildir.
-    // Bunları hesaplayabilmek için "B" nin hangi indexte olduğunu bilmek yeterlidir.
-    
-    return [x,y];
-  }
-
   function getXYMesaj() {
     // Kullanıcı için "Koordinatlar (2, 2)" mesajını izlemek için bir state'in olması gerekli değildir.
     // Koordinatları almak için yukarıdaki "getXY" helperını ve ardından "getXYMesaj"ı kullanabilirsiniz.
     // tamamen oluşturulmuş stringi döndürür.
-    return `Koordinatlar (${getXY()[0]}, ${getXY()[1]})`
+    return `Koordinatlar (${x}, ${y})`
   }
 
   function reset() {
@@ -44,55 +35,86 @@ export default function AppFunctional(props) {
     setY(Math.floor(initialIndex / 3) + 1);
   }
 
-  function nextIndex(targetIndex) {
-    // Bu helper bir yön ("sol", "yukarı", vb.) alır ve "B" nin bir next indeksinin ne olduğunu hesaplar.
-    // Gridin kenarına ulaşıldığında başka gidecek yer olmadığı için,
-    // şu anki indeksi değiştirmemeli.
-  }
-
   function move(evt) {
-    // Bu event handler, "B" için yeni bir dizin elde etmek üzere yukarıdaki yardımcıyı kullanabilir,
-    // ve buna göre state i değiştirir.
-  const direction = evt.target.id;
-  console.log("move", direction);
-  let newX = x;
-  let newY = y;
-
-  switch (direction) {
-    case "left":
-      newX = Math.max(1, x - 1);
-      break;
-    case "up":
-      newY = Math.max(1, y - 1);
-      break;
-    case "right":
-      newX = Math.min(3, x + 1);
-      break;
-    case "down":
-      newY = Math.min(3, y + 1);
-      break;
-    default:
-      break;
+    const direction = evt.target.id;
+    console.log("move", direction);
+    let newX = x;
+    let newY = y;
+    let errorMessage = '';
+  
+    switch (direction) {
+      case "left":
+        if (x > 1) {
+          newX = x - 1;
+        } else {
+          errorMessage = "Sola gidemezsiniz";
+        }
+        break;
+      case "up":
+        if (y > 1) {
+          newY = y - 1;
+        } else {
+          errorMessage = "Yukarıya gidemezsiniz";
+        }
+        break;
+      case "right":
+        if (x < 3) {
+          newX = x + 1;
+        } else {
+          errorMessage = "Sağa gidemezsiniz";
+        }
+        break;
+      case "down":
+        if (y < 3) {
+          newY = y + 1;
+        } else {
+          errorMessage = "Aşağıya gidemezsiniz";
+        }
+        break;
+      default:
+        break;
+    }
+  
+    if (errorMessage === '') {
+      const newIndex = (newY - 1) * 3 + newX - 1;
+      setX(newX);
+      setY(newY);
+      setIndex(newIndex);
+      setMessage(initialMessage);
+      setSteps(steps + 1);
+    } else {
+      setMessage(errorMessage);
+    }
   }
 
-  if (newX !== x || newY !== y) {
-    const newIndex = (newY - 1) * 3 + newX - 1;
-    setX(newX);
-    setY(newY);
-    setIndex(newIndex);
-    setMessage(initialMessage);
-    setSteps(steps + 1);
-  } else {
-    setMessage(`${direction} yönünde gidemezsiniz.`);
-  }
-  }
-
-  function onChange(evt) {
+  function onChangeHandler(evt) {
     // inputun değerini güncellemek için bunu kullanabilirsiniz
+    setEmail(evt.target.value);
   }
 
-  function onSubmit(evt) {
+  function onSubmitHandler(evt) {
     // payloadu POST etmek için bir submit handlera da ihtiyacınız var.
+    evt.preventDefault();
+
+    console.log("submit");
+
+    axios
+      .post("http://localhost:9000/api/result", {
+        x: x,
+        y: y,
+        steps: steps,
+        email: email,
+      })
+      .then(function (response) {
+        console.log(response);
+        setMessage(response.data.message);
+      })
+      .catch(function (error) {
+        console.log(error);
+        setMessage(error.response.data.message);
+      });
+
+    setEmail(initialEmail);
   }
 
   return (
@@ -120,8 +142,8 @@ export default function AppFunctional(props) {
         <button onClick={move} id="down">AŞAĞI</button>
         <button onClick={reset} id="reset">reset</button>
       </div>
-      <form>
-        <input id="email" type="email" placeholder="email girin"></input>
+      <form onSubmit={onSubmitHandler}>
+        <input value={email} id="email" type="email" placeholder="email girin" onChange={onChangeHandler}></input>
         <input id="submit" type="submit"></input>
       </form>
     </div>
